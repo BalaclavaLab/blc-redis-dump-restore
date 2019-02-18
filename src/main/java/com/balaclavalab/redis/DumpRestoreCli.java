@@ -107,7 +107,7 @@ public class DumpRestoreCli {
                                                     } else {
                                                         return Mono.empty();
                                                     }
-                                                })))
+                                                })), 1000)
                 .collectList()
                 .doAfterSuccessOrError((strings, throwable) -> {
                     System.out.println("Processed new batch, total processed key count: " + counter.addAndGet(keys.size()) + " (dumped-restored keys in this batch: " + strings.size() + ")");
