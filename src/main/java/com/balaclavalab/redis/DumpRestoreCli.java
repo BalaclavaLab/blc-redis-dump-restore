@@ -83,7 +83,7 @@ public class DumpRestoreCli {
         if (keyScanCursor.isFinished()) {
             return Flux.from(processKeys(counter, keys, commandsFrom, commandsTo));
         } else {
-            return Flux.merge(
+            return Flux.mergeSequential(
                     processKeys(counter, keys, commandsFrom, commandsTo),
                     commandsFrom.scan(keyScanCursor, scanArgs)
                             .flatMapMany(newKeyScanCursor ->
