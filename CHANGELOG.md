@@ -1,5 +1,9 @@
 # Change Log
 
+### Version 0.1.2 *(2019-02-18)*
+
+* Improvements for performance.
+
 ### Version 0.1.1 *(2019-02-18)*
 
 * Various small fixes.

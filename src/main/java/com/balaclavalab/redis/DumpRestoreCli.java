@@ -5,6 +5,7 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.ScanArgs;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
+import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.ByteArrayCodec;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -59,6 +60,7 @@ public class DumpRestoreCli {
 
         RedisClient clientFrom = RedisClient.create(uriFrom);
         StatefulRedisConnection<byte[], byte[]> connectFrom = clientFrom.connect(new ByteArrayCodec());
+        RedisCommands<byte[], byte[]> commandsFromSync = connectFrom.sync();
         RedisReactiveCommands<byte[], byte[]> commandsFrom = connectFrom.reactive();
 
         RedisClient clientTo = RedisClient.create(uriTo);
@@ -66,28 +68,13 @@ public class DumpRestoreCli {
         RedisReactiveCommands<byte[], byte[]> commandsTo = connectTo.reactive();
 
         ScanArgs scanArgs = ScanArgs.Builder.limit(scanLimit).match(scanMatch);
-        commandsFrom.scan(scanArgs)
-                .flatMapMany(keyScanCursor ->
-                        processScanCursor(counter, scanArgs, keyScanCursor, commandsFrom, commandsTo))
-                .ignoreElements()
+        KeyScanCursor<byte[]> scanCursor = commandsFromSync.scan(scanArgs);
+        processKeys(counter, scanCursor.getKeys(), commandsFrom, commandsTo)
                 .block();
-    }
-
-    private static Flux<byte[]> processScanCursor(
-            AtomicLong counter,
-            ScanArgs scanArgs,
-            KeyScanCursor<byte[]> keyScanCursor,
-            RedisReactiveCommands<byte[], byte[]> commandsFrom,
-            RedisReactiveCommands<byte[], byte[]> commandsTo) {
-        List<byte[]> keys = keyScanCursor.getKeys();
-        if (keyScanCursor.isFinished()) {
-            return Flux.from(processKeys(counter, keys, commandsFrom, commandsTo));
-        } else {
-            return Flux.mergeSequential(
-                    processKeys(counter, keys, commandsFrom, commandsTo),
-                    commandsFrom.scan(keyScanCursor, scanArgs)
-                            .flatMapMany(newKeyScanCursor ->
-                                    processScanCursor(counter, scanArgs, newKeyScanCursor, commandsFrom, commandsTo)));
+        while(!scanCursor.isFinished()) {
+            scanCursor = commandsFromSync.scan(scanCursor, scanArgs);
+            processKeys(counter, scanCursor.getKeys(), commandsFrom, commandsTo)
+                    .block();
         }
     }
 
@@ -107,7 +94,7 @@ public class DumpRestoreCli {
                                                     } else {
                                                         return Mono.empty();
                                                     }
-                                                })), 1000)
+                                                })))
                 .collectList()
                 .doAfterSuccessOrError((strings, throwable) -> {
                     System.out.println("Processed new batch, total processed key count: " + counter.addAndGet(keys.size()) + " (dumped-restored keys in this batch: " + strings.size() + ")");
