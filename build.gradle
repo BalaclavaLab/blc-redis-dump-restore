@@ -6,7 +6,7 @@ apply plugin: 'application'
 apply plugin: 'com.bmuschko.docker-java-application'
 
 group 'com.balaclavalab'
-version '0.1.0'
+version '0.1.1'
 
 description = 'BLC Redis dump restore utility'
 mainClassName = 'com.balaclavalab.redis.DumpRestoreCli'
