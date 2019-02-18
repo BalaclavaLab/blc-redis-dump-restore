@@ -1,5 +1,9 @@
 # Change Log
 
+### Version 0.1.3 *(2019-02-18)*
+
+* Support for TTL.
+
 ### Version 0.1.2 *(2019-02-18)*
 
 * Improvements for performance.

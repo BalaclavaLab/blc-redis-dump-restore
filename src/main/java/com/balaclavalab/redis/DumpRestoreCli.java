@@ -71,7 +71,7 @@ public class DumpRestoreCli {
         KeyScanCursor<byte[]> scanCursor = commandsFromSync.scan(scanArgs);
         processKeys(counter, scanCursor.getKeys(), commandsFrom, commandsTo)
                 .block();
-        while(!scanCursor.isFinished()) {
+        while (!scanCursor.isFinished()) {
             scanCursor = commandsFromSync.scan(scanCursor, scanArgs);
             processKeys(counter, scanCursor.getKeys(), commandsFrom, commandsTo)
                     .block();
@@ -85,12 +85,15 @@ public class DumpRestoreCli {
             RedisReactiveCommands<byte[], byte[]> commandsTo) {
         return Flux.fromIterable(keys)
                 .flatMap(key ->
-                        commandsFrom.dump(key)
+                        Mono.zip(
+                                commandsFrom.dump(key),
+                                commandsFrom.pttl(key))
                                 .flatMap(result ->
                                         commandsTo.exists(key)
                                                 .flatMap(exists -> {
                                                     if (exists == 0) {
-                                                        return commandsTo.restore(key, 0, result);
+                                                        long ttl = result.getT2();
+                                                        return commandsTo.restore(key, ttl >= 0 ? ttl : 0, result.getT1());
                                                     } else {
                                                         return Mono.empty();
                                                     }
