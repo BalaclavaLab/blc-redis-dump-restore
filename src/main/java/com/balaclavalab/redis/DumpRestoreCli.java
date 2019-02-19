@@ -23,8 +23,8 @@ public class DumpRestoreCli {
 
     public static void main(String[] args) {
         Options options = new Options();
-        options.addOption("f", "uriFrom", true, "Redis from (e.g. redis://redis-interests001.mint.internal/1)");
-        options.addOption("t", "uriTo", true, "Redis to (e.g. redis://localhost/15)");
+        options.addOption("f", "uriFrom", true, "Redis from (e.g. redis://localhost/1)");
+        options.addOption("t", "uriTo", true, "Redis to (e.g. redis://localhost/2)");
         options.addOption("m", "scanMatch", true, "Scan Match (default: *)");
         options.addOption("l", "scanLimit", true, "Scan Limit (default: 5000)");
 

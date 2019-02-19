@@ -1,5 +1,10 @@
 # Change Log
 
+### Version 0.1.4 *(2019-02-19)*
+
+* Updating docs and examples.
+* Changing image to `openjdk:11-jre-slim`.
+
 ### Version 0.1.3 *(2019-02-18)*
 
 * Support for TTL.

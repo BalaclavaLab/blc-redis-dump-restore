@@ -6,7 +6,7 @@ apply plugin: 'application'
 apply plugin: 'com.bmuschko.docker-java-application'
 
 group 'com.balaclavalab'
-version '0.1.3'
+version '0.1.4'
 
 description = 'BLC Redis dump restore utility'
 mainClassName = 'com.balaclavalab.redis.DumpRestoreCli'
@@ -37,7 +37,7 @@ dependencies {
 
 docker {
     javaApplication {
-        baseImage = 'openjdk:11'
+        baseImage = 'openjdk:11-jre-slim'
         port = 8080
         tag = "balaclavalab/${applicationName}:${version}"
     }
