@@ -2,6 +2,7 @@ package com.balaclavalab.redis;
 
 import io.lettuce.core.KeyScanCursor;
 import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisClusterClient;
 import io.lettuce.core.ScanArgs;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
@@ -58,12 +59,12 @@ public class DumpRestoreCli {
         System.out.println("To Redis: " + uriTo);
         AtomicLong counter = new AtomicLong();
 
-        RedisClient clientFrom = RedisClient.create(uriFrom);
+        RedisClusterClient clientFrom = RedisClusterClient.create(uriFrom);
         StatefulRedisConnection<byte[], byte[]> connectFrom = clientFrom.connect(new ByteArrayCodec());
         RedisCommands<byte[], byte[]> commandsFromSync = connectFrom.sync();
         RedisReactiveCommands<byte[], byte[]> commandsFrom = connectFrom.reactive();
 
-        RedisClient clientTo = RedisClient.create(uriTo);
+        RedisClusterClient clientTo = RedisClusterClient.create(uriTo);
         StatefulRedisConnection<byte[], byte[]> connectTo = clientTo.connect(new ByteArrayCodec());
         RedisReactiveCommands<byte[], byte[]> commandsTo = connectTo.reactive();
 
