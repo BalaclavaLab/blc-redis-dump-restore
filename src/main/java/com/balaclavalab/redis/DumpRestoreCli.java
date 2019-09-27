@@ -2,10 +2,12 @@ package com.balaclavalab.redis;
 
 import io.lettuce.core.KeyScanCursor;
 import io.lettuce.core.RedisClient;
+import io.lettuce.core.api.reactive.RedisKeyReactiveCommands;
+import io.lettuce.core.api.sync.RedisKeyCommands;
+import io.lettuce.core.cluster.RedisClusterClient;
+import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.ScanArgs;
 import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.api.reactive.RedisReactiveCommands;
-import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.ByteArrayCodec;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -27,6 +29,8 @@ public class DumpRestoreCli {
         options.addOption("t", "uriTo", true, "Redis to (e.g. redis://localhost/2)");
         options.addOption("m", "scanMatch", true, "Scan Match (default: *)");
         options.addOption("l", "scanLimit", true, "Scan Limit (default: 5000)");
+        options.addOption("s", "SrcCluMod", true, "Source redis is in Cluster mode (default: no)");
+        options.addOption("d", "DstCluMod", true, "Destination redis is in Cluster mode (default: no)");
 
         CommandLineParser commandLineParser = new DefaultParser();
         try {
@@ -38,8 +42,10 @@ public class DumpRestoreCli {
                 String uriFrom = commandLine.getOptionValue("f");
                 String uriTo = commandLine.getOptionValue("t");
                 String scanMatch = commandLine.getOptionValue("m", "*");
+                String SrcCluMod = commandLine.getOptionValue("s", "no");
+                String DstCluMod = commandLine.getOptionValue("d", "no");
                 int scanLimit = Integer.valueOf(commandLine.getOptionValue("l", "5000"));
-                dumpRestore(uriFrom, uriTo, scanMatch, scanLimit);
+                dumpRestore(uriFrom, uriTo, scanMatch, scanLimit, SrcCluMod, DstCluMod);
             }
         } catch (ParseException e) {
             System.err.println("Parsing failed. Reason: " + e.getMessage());
@@ -52,20 +58,37 @@ public class DumpRestoreCli {
         formatter.printHelp("blc-redis-dump-restore", "BLC Redis dump restore utility", options, null, true);
     }
 
-    private static void dumpRestore(String uriFrom, String uriTo, String scanMatch, int scanLimit) {
+    private static void dumpRestore(String uriFrom, String uriTo, String scanMatch, int scanLimit, String SrcCluMod, String DstCluMod) {
         System.out.println("Starting dump and restore with following scanArgs: match=" + scanMatch + ", limit=" + scanLimit);
         System.out.println("From Redis: " + uriFrom);
         System.out.println("To Redis: " + uriTo);
         AtomicLong counter = new AtomicLong();
 
-        RedisClient clientFrom = RedisClient.create(uriFrom);
-        StatefulRedisConnection<byte[], byte[]> connectFrom = clientFrom.connect(new ByteArrayCodec());
-        RedisCommands<byte[], byte[]> commandsFromSync = connectFrom.sync();
-        RedisReactiveCommands<byte[], byte[]> commandsFrom = connectFrom.reactive();
+        RedisKeyCommands<byte[], byte[]> commandsFromSync = null;
+        RedisKeyReactiveCommands<byte[], byte[]> commandsFrom = null;
+        RedisKeyReactiveCommands<byte[], byte[]> commandsTo = null;
 
-        RedisClient clientTo = RedisClient.create(uriTo);
-        StatefulRedisConnection<byte[], byte[]> connectTo = clientTo.connect(new ByteArrayCodec());
-        RedisReactiveCommands<byte[], byte[]> commandsTo = connectTo.reactive();
+        if ("yes".equals(SrcCluMod)) {
+            RedisClusterClient clientFrom = RedisClusterClient.create(uriFrom);
+            StatefulRedisClusterConnection<byte[], byte[]> connectFrom = clientFrom.connect(new ByteArrayCodec());
+            commandsFromSync = connectFrom.sync();
+            commandsFrom = connectFrom.reactive();
+        } else {
+            RedisClient clientFrom = RedisClient.create(uriFrom);
+            StatefulRedisConnection<byte[], byte[]> connectFrom = clientFrom.connect(new ByteArrayCodec());
+            commandsFromSync = connectFrom.sync();
+            commandsFrom = connectFrom.reactive();
+        }
+
+        if ("yes".equals(DstCluMod)) {
+            RedisClusterClient clientTo = RedisClusterClient.create(uriTo);
+            StatefulRedisClusterConnection<byte[], byte[]> connectTo = clientTo.connect(new ByteArrayCodec());
+            commandsTo = connectTo.reactive();
+        } else {
+            RedisClient clientTo = RedisClient.create(uriTo);
+            StatefulRedisConnection<byte[], byte[]> connectTo = clientTo.connect(new ByteArrayCodec());
+            commandsTo = connectTo.reactive();
+        }
 
         ScanArgs scanArgs = ScanArgs.Builder.limit(scanLimit).match(scanMatch);
         KeyScanCursor<byte[]> scanCursor = commandsFromSync.scan(scanArgs);
@@ -81,8 +104,8 @@ public class DumpRestoreCli {
     private static Mono<byte[]> processKeys(
             AtomicLong counter,
             List<byte[]> keys,
-            RedisReactiveCommands<byte[], byte[]> commandsFrom,
-            RedisReactiveCommands<byte[], byte[]> commandsTo) {
+            RedisKeyReactiveCommands<byte[], byte[]> commandsFrom,
+            RedisKeyReactiveCommands<byte[], byte[]> commandsTo) {
         return Flux.fromIterable(keys)
                 .flatMap(key ->
                         Mono.zip(
