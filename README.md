@@ -23,7 +23,7 @@ BLC Redis dump restore utility.
 ### Examples:
 
 * `./blc-redis-dump-restore -f redis://localhost/1 -t redis://localhost/2`
-* `./blc-redis-dump-restore -f redis://localhost/1 -t redis://localhost/2 -d yes`
+* `./blc-redis-dump-restore -f redis://localhost/1 -t redis://redis_cluter_host/2 -d yes`
 * `./blc-redis-dump-restore -m user#* -f redis://localhost/1 -t redis://localhost/2`
 
 ### Usage reference
