@@ -1,5 +1,11 @@
 # Change Log
 
+### Version 0.1.5 *(2019-09-27)*
+
+* Updated code to work with clustered and non clustered redis services.
+Works with self managed and AWS elasticache redis services. 
+* Updating docs and examples.
+
 ### Version 0.1.4 *(2019-02-19)*
 
 * Updating docs and examples.
