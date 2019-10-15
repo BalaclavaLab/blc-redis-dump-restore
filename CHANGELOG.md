@@ -1,5 +1,11 @@
 # Change Log
 
+### Version 0.1.5 *(2019-10-15)*
+
+* Updating `gradle` to `5.6.2`.
+* Using `RedisURI` to facilitate auth. (Thanks to @amozgovoy).
+* Support for Redis Cluster. (Thanks to @egmantas).
+
 ### Version 0.1.4 *(2019-02-19)*
 
 * Updating docs and examples.
