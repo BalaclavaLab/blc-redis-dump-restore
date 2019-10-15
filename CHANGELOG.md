@@ -3,8 +3,8 @@
 ### Version 0.1.5 *(2019-10-15)*
 
 * Updating `gradle` to `5.6.2`.
-* Using `RedisURI` to facilitate auth. (Thanks to [@amozgovoy](https://github.com/amozgovoy])).
-* Support for Redis Cluster. (Thanks to [@egmantas](https://github.com/egmantas])).
+* Using `RedisURI` to facilitate auth. (Thanks to [@amozgovoy](https://github.com/amozgovoy)).
+* Support for Redis Cluster. (Thanks to [@egmantas](https://github.com/egmantas)).
 
 ### Version 0.1.4 *(2019-02-19)*
 
